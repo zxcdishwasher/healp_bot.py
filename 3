@@ -1,0 +1,116 @@
+
+import random
+import discord
+from discord.ext import commands
+
+intents = discord.Intents.default()
+intents.message_content = True
+
+bot = commands.Bot(command_prefix='?', intents=intents)
+
+
+user_points = {}
+
+@bot.event
+async def on_ready():
+    print(f'We have logged in as {bot.user}')
+
+@bot.command()
+async def hello(ctx):
+    await ctx.send('привет я nerd2 я помогу тебе сделать мир лучше, ты готов?')
+    
+    def check(message):
+        return message.author == ctx.author and message.channel == ctx.channel
+    
+    try:
+        response = await bot.wait_for('message', timeout=30, check=check)
+        
+        mood = response.content.lower()
+        if mood == 'да':
+            await ctx.send("Отлично! Для начала ты можешь сделать пару заданий. Чтобы начать, введи `)assignment`. За эти задания ты можешь получать баллы. Также ты можешь почитать советы, введи команду `)advice`.")
+        elif mood == 'нет':
+            await ctx.send("Эх, жалко")
+    except asyncio.TimeoutError:
+        await ctx.send("Я забыл")
+
+@bot.command()
+async def advice(ctx):
+    advice_list = [
+        "Повторное использование и вторичная переработка материалов.",
+        "Использование многоразовых продуктов, таких как стеклянные контейнеры и бутылки.",
+        "Избегание одноразовых пластиковых продуктов и выбор альтернативных материалов.",
+        "Компостирование органических отходов, таких как пищевые остатки и фруктовые остатки.",
+        "Минимизация использования упаковки, покупка весовых продуктов.",
+        "Энергосбережение и использование энергосберегающих приборов.",
+        "Обучение себя и близких проблемам отходов и устойчивого потребления."
+    ]
+    advice_message = random.choice(advice_list)
+    await ctx.send(advice_message)
+
+@bot.command()
+async def assignment(ctx):
+    await ctx.send('За каждое выполненное задание ты будешь получать баллы. Когда выполнишь задание, напиши `всё`.')
+    
+    assignment_list = [
+        "Изучение мусора: Проведите анализ своего мусора в течение недели. Записывайте, какие виды отходов вы производите больше всего.",
+        "Планирование покупок: Перед походом в магазин составьте список покупок и придерживайтесь его. Избегайте покупки продуктов с избыточной упаковкой.",
+        "Внедрение многоразовых товаров: Замените одноразовые товары многоразовыми. Например, используйте многоразовые бутылки, контейнеры, пакеты и стаканчики.",
+        "Компостирование: Начните компостировать органические отходы. Изучите, какие продукты можно компостировать, и как это сделать правильно.",
+        "Отказ от пластика: Избегайте использования пластиковых продуктов. Найдите альтернативы из стекла, металла, бамбука или биоразлагаемых материалов.",
+        "Вторичная переработка: Изучите, как и где можно сдавать вторсырье для переработки. Создайте место для сбора бумаги, стекла, пластика и металла.",
+        "Использование весовых продуктов: Покупайте продукты весом и используйте свои собственные контейнеры. Избегайте покупки продуктов, упакованных в большие пластиковые упаковки.",
+        "Энергосбережение: Изучите свой дом и определите, где можно сэкономить энергию. Рассмотрите варианты использования энергосберегающих приборов и ламп.",
+        "Повторное использование упаковки: Повторно используйте упаковку там, где это возможно. Например, использование стеклянных банок для хранения продуктов.",
+        "Образование: Примите участие в вебинарах, курсах или мероприятиях по теме устойчивости и уменьшения отходов.",
+        "Участие в сообществе: Присоединитесь к местной группе по устойчивости или организации, чтобы обмениваться опытом и получать поддержку.",
+        "Постепенные изменения: Начните с внедрения постепенных изменений в свою повседневную жизнь. Например, каждую неделю выбирайте новое действие для уменьшения отходов."
+    ]
+    assignment_message = random.choice(assignment_list)
+    await ctx.send(assignment_message)
+    user_id = str(ctx.author.id)
+    points = user_points.get(user_id, 0) + 1
+    user_points[user_id] = points
+
+@bot.command()
+async def give_point(ctx):
+    user_id = str(ctx.author.id)
+    points = user_points.get(user_id, 0) + 1
+    user_points[user_id] = points
+    await ctx.send(f"Вы получили 1 балл. Теперь у вас {points} баллов.")
+
+@bot.command()
+async def assign_role(ctx):
+    user_id = str(ctx.author.id)
+    points = user_points.get(user_id, 0)
+
+    role_id_1 = 1188229709021053097  
+    role_id_5 = 1188229802684063824  
+    role_id_10 = 1188229874335354900  
+
+    role_1 = discord.utils.get(ctx.guild.roles, id=role_id_1)
+    role_5 = discord.utils.get(ctx.guild.roles, id=role_id_5)
+    role_10 = discord.utils.get(ctx.guild.roles, id=role_id_10)
+
+    if role_1 and role_5 and role_10:
+        if points <= 5:
+            await ctx.author.add_roles(role_1)
+            await ctx.send(f"Пользователь {ctx.author.name} получил роль {role_1.name}.")
+        elif points <= 10:
+            await ctx.author.add_roles(role_5)
+            await ctx.send(f"Пользователь {ctx.author.name} получил роль {role_5.name}.")
+        elif points <= 10000:
+            await ctx.author.add_roles(role_10)
+            await ctx.send(f"Пользователь {ctx.author.name} получил роль {role_10.name}.")
+        else:
+            await ctx.send("Указанная роль не найдена.")
+    else:
+        await ctx.send("Одна из ролей не найдена. Убедитесь, что вы установили правильные ID ролей.")
+
+@bot.command()
+async def check_points(ctx):
+    user_id = str(ctx.author.id)
+    points = user_points.get(user_id, 0)
+    await ctx.send(f"У вас {points} баллов.")
+
+
+bot.run('')
